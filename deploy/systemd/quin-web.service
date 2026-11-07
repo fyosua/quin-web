@@ -1,0 +1,33 @@
+# Production unit — install as /etc/systemd/system/quin-web.service
+#
+#   sudo cp deploy/systemd/quin-web.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now quin-web
+#
+# Assumes the app lives in /home/deploy/quin-web and .env.production holds the secrets.
+
+[Unit]
+Description=Quin portfolio (Next.js)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/quin-web
+EnvironmentFile=/home/deploy/quin-web/.env.production
+Environment=NODE_ENV=production
+# Bind to loopback only — Nginx is the public face.
+ExecStart=/usr/local/bin/node node_modules/next/dist/bin/next start -p 3020 -H 127.0.0.1
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/deploy/quin-web/uploads /home/deploy/quin-web/.next/cache
+
+[Install]
+WantedBy=multi-user.target

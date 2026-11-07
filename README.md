@@ -6,7 +6,9 @@ redeploys needed to publish work.
 
 Built by [yosuaf.com](https://yosuaf.com) for a freelance client engagement.
 
-**Staging:** https://quin.yosuaf.com
+**Staging:** https://quin.yosuaf.com (Cloudflare Tunnel, home lab)
+**Production:** a VPS with a public IP — Nginx + Let's Encrypt → Node, no tunnel
+(see [docs/SERVER-REQUIREMENTS.md](docs/SERVER-REQUIREMENTS.md))
 
 ---
 

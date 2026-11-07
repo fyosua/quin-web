@@ -80,30 +80,40 @@ site — keep at least 20 % free and monitor it.
 Build tools (gcc, make, python3) are **not** required — `sharp` and `@node-rs/argon2` ship
 prebuilt binaries for linux-x64 and linux-arm64.
 
-## Two valid network topologies
+## Network topology
 
-**A — Cloudflare Tunnel (no open ports, what staging uses)**
-
-```
-Internet → Cloudflare (TLS, WAF, optional Access) → cloudflared → 127.0.0.1:3020
-```
-
-- No inbound 80/443; the firewall can deny everything except SSH
-- TLS, DDoS protection and caching handled at the edge
-- Needs a domain on Cloudflare; `cloudflared` runs as a systemd service
-
-**B — VPS with a public IP**
+**Production is a normal VPS with a public IPv4/IPv6 address** — no tunnel, no proxy tier:
 
 ```
-Internet → Nginx :443 (Let's Encrypt) → 127.0.0.1:3020 → Next.js
+Internet → Nginx :443 (Let's Encrypt) → 127.0.0.1:3020 (Next.js) → PostgreSQL 16
 ```
 
-- `client_max_body_size 20m` (photo uploads), HTTP/2, HSTS, `www → apex` redirect
-- Open 80/443, keep 3020 bound to loopback only
-- fail2ban on the Nginx and sshd jails
+- DNS: `A` record `@ → <VPS IP>` and `A` (or `AAAA`) for `www`; Nginx redirects `www` → apex and
+  `http` → `https`
+- Ports open: **22 (SSH), 80, 443**. `3020` stays bound to loopback and is never exposed
+- TLS: `certbot --nginx` issues and auto-renews; HSTS is sent with a one-year max-age
+- `client_max_body_size 20m` so photo uploads pass through
+- Correct client IP reaches the app via `X-Forwarded-For` / `X-Real-IP` — set
+  `TRUSTED_IP_HEADER=x-real-ip` in `.env.production` so login lockout and contact rate limits key
+  on the real visitor, not the proxy
 
-Neither path needs a CDN to hit the performance targets — images are already served as
-pre-generated WebP with immutable caching.
+Ready-to-use files live in the repo: `deploy/nginx/quin-web.conf` and
+`deploy/systemd/quin-web.service`.
+
+Cloudflare's proxy is optional in front of this (orange cloud, SSL mode *Full (strict)* with
+Nginx's `real_ip` module). If you enable it, the origin still has a public IP and Nginx still
+terminates TLS — the tunnel is not involved.
+
+### Staging only — Cloudflare Tunnel
+
+Staging on the home lab has no public IP, so it uses an outbound-only tunnel:
+
+```
+Internet → Cloudflare → cloudflared → 127.0.0.1:3020
+```
+
+No inbound ports, TLS at the edge, optionally behind Cloudflare Access. This is a convenience for
+staging and is **not** how production is served.
 
 ## OS-level settings worth changing
 

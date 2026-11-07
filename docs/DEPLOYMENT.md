@@ -1,13 +1,17 @@
 # Deployment
 
-Staging runs **natively** on a small Linux host: Node 22 + systemd + PostgreSQL 16, published
-through a Cloudflare Tunnel. No Docker — a deploy is a rebuild, not an image build.
+Both environments run **natively**: Node 22 + systemd + PostgreSQL 16. No Docker — a deploy is a
+rebuild, not an image build.
 
 ```
-Internet → Cloudflare (TLS, Access) → cloudflared → 127.0.0.1:3020 (Next.js) → PostgreSQL 16
+Production  Internet → Nginx :443 (Let's Encrypt) → 127.0.0.1:3020 (Next.js) → PostgreSQL 16
+Staging     Internet → Cloudflare (TLS) → cloudflared → 127.0.0.1:3020 (Next.js) → PostgreSQL 16
 ```
 
-## Host layout
+Production is a **VPS with a public IP** — see [Production (VPS)](#production-vps). Staging is the
+home-lab box published through a tunnel; the sections below describe that shared setup first.
+
+## Host layout (both environments)
 
 | Piece | Path / unit |
 |---|---|
@@ -125,7 +129,87 @@ TOK=$(grep ^REVALIDATE_TOKEN= .env.production | cut -d= -f2 | tr -d '"')
 curl -X POST http://127.0.0.1:3020/api/revalidate -H "x-revalidate-token: $TOK"
 ```
 
-## Cloudflare Tunnel
+## Production (VPS)
+
+The only differences from staging: a public IP, Nginx in front, Let's Encrypt for TLS, and the
+firewall opened for 80/443.
+
+### 1. Server hardening
+
+```bash
+adduser deploy && usermod -aG sudo deploy          # no root logins
+# /etc/ssh/sshd_config: PasswordAuthentication no, PermitRootLogin no
+apt update && apt upgrade -y
+apt install -y nginx certbot python3-certbot-nginx git curl ufw fail2ban \
+               unattended-upgrades postgresql-16 postgresql-client-16   # PGDG for PG16
+
+ufw default deny incoming && ufw default allow outgoing
+ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp
+ufw enable
+```
+
+2 GB swap if the box has 4 GB or less (the build spikes to ~900 MB).
+
+### 2. DNS
+
+| Record | Value |
+|---|---|
+| `A  @` | VPS IPv4 |
+| `A  www` | VPS IPv4 |
+| `AAAA` (optional) | VPS IPv6 |
+
+Wait for propagation before requesting the certificate.
+
+### 3. Application
+
+Follow [Host layout](#host-layout), [Environment file](#environment-file) and
+[systemd unit](#systemd-unit) below, with the app in `/home/deploy/quin-web`. In production:
+
+```dotenv
+NEXT_PUBLIC_SITE_URL=https://YOUR_DOMAIN
+ROBOTS_NOINDEX=false                  # production is indexable
+TRUSTED_IP_HEADER=x-real-ip           # Nginx is the proxy in front
+```
+
+### 4. Nginx + TLS
+
+```bash
+sudo cp deploy/nginx/quin-web.conf /etc/nginx/sites-available/quin-web.conf
+sudo sed -i 's/YOUR_DOMAIN/example.com/g' /etc/nginx/sites-available/quin-web.conf
+sudo ln -s /etc/nginx/sites-available/quin-web.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+sudo certbot --nginx -d example.com -d www.example.com --redirect
+sudo certbot renew --dry-run          # auto-renew via systemd timer
+```
+
+The config sets `www → apex`, `http → https`, HSTS, `client_max_body_size 20m`, and long-lived
+caching for `/_next/static/` and `/api/uploads/`. It also rate-limits `/management/login` at the
+edge.
+
+### 5. Verify
+
+```bash
+curl -s https://example.com/api/health            # {"status":"ok","db":"ok",...}
+curl -sI https://example.com | grep -i strict     # HSTS present
+curl -sI http://example.com | head -1             # 301 → https
+ss -tlnp | grep 3020                              # must be 127.0.0.1 only
+```
+
+Then run an SSL Labs check (target: A) and a Lighthouse pass on `/` and `/projects`.
+
+### 6. Backups
+
+```bash
+# /etc/cron.d/quin-backup  — nightly at 02:00
+0 2 * * * deploy pg_dump -Fc "$(grep ^DATABASE_URL /home/deploy/quin-web/.env.production | cut -d= -f2- | tr -d '\"')" \
+  | gzip > /var/backups/quin/quin-$(date +\%F).dump.gz
+```
+
+Copy dumps and `uploads/` off the box with `rclone` to object storage. Test a restore monthly.
+
+## Cloudflare Tunnel (staging only)
+
 
 `/etc/cloudflared/config.yml`:
 
