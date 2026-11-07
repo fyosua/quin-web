@@ -74,6 +74,7 @@ npx tsx scripts/admin-create.ts --username owner
 - **[docs/ADMIN-GUIDE.md](docs/ADMIN-GUIDE.md)** — day-to-day use, written for the client
 - **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — server layout, deploy, backups, rollback
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — routes, data model, auth, image pipeline
+- **[docs/SERVER-REQUIREMENTS.md](docs/SERVER-REQUIREMENTS.md)** — OS choice, VPS sizing, software versions
 
 ## Project layout
 
