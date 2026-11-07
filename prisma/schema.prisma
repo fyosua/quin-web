@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum Category {
+  RESIDENTIAL
+  COMMERCIAL
+  HOSPITALITY
+  OTHER
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+model AdminUser {
+  id                String    @id @default(cuid())
+  username          String    @unique
+  accessIdHash      String
+  failedAttempts    Int       @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime?
+  createdAt         DateTime  @default(now())
+  sessions          Session[]
+  auditLogs         AuditLog[]
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  user       AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  ip         String?
+  userAgent  String?
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  title        String
+  summary      String        @db.VarChar(200)
+  description  String        @db.Text
+  category     Category
+  location     String?
+  year         Int?
+  areaM2       Int?
+  client       String?
+  coverImageId String?
+  status       ProjectStatus @default(DRAFT)
+  featured     Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  publishedAt  DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  images       ProjectImage[]
+  slugHistory  SlugHistory[]
+
+  @@index([status, sortOrder])
+  @@index([category])
+}
+
+model ProjectImage {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileKey   String
+  width     Int
+  height    Int
+  alt       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([projectId, sortOrder])
+}
+
+model SlugHistory {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  oldSlug   String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String        @db.Text
+  ipHash    String?
+  status    MessageStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  userId    String?
+  user      AdminUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  expiresAt DateTime
+}
+
+/// Singleton row — editable copy for the public site (studio statement, contact details, socials).
+model SiteSettings {
+  id             String   @id @default("singleton")
+  studioEyebrow  String   @default("The studio")
+  studioHeading  String   @default("Considered interiors,\nbuilt to be lived in.")
+  studioBody     String   @db.Text
+  contactName    String   @default("")
+  contactEmail   String   @default("hello@yosuaf.com")
+  contactPhone   String   @default("+60 3 0000 0000")
+  showroomName   String   @default("Quin Studio")
+  address        String   @default("Kuala Lumpur, Malaysia")
+  hours          String   @default("Visits by appointment")
+  mapUrl         String?
+  instagramUrl   String?
+  linkedinUrl    String?
+  facebookUrl    String?
+  updatedAt      DateTime @updatedAt
+}

@@ -1,0 +1,301 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Benchmark: thaicong.com — near-black ground, warm off-white type, brass accent */
+  --color-bg: #0f0e0d;
+  --color-surface: #151412;
+  --color-surface-2: #1c1a17;
+  --color-ink: #f3efe8;
+  --color-muted: #9b938a;
+  --color-line: #2b2723;
+  --color-accent: #b08d5c;
+  --color-brass: #c9a978;
+
+  --font-heading: var(--font-serif), 'Cormorant Garamond', Georgia, serif;
+  --font-body: var(--font-sans), 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    background: var(--color-bg);
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: 0.9375rem;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.08;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: #0f0e0d;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-brass);
+    outline-offset: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0b0a09;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2b2723;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    font-weight: 400;
+  }
+
+  /* Benchmark nav: uppercase, wide tracking, hairline underline on hover */
+  .nav-link {
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+    position: relative;
+    padding-bottom: 3px;
+    font-weight: 400;
+    transition: color 200ms ease;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1px;
+    width: 0;
+    background: var(--color-brass);
+    transition: width 260ms ease;
+  }
+
+  .nav-link:hover,
+  .nav-link[data-active='true'] {
+    color: var(--color-brass);
+  }
+
+  .nav-link:hover::after,
+  .nav-link[data-active='true']::after {
+    width: 100%;
+  }
+
+  /* Centred page title, as on the benchmark's "PROJECTS" page */
+  .page-title {
+    font-family: var(--font-body);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.15;
+  }
+
+  .prose-serif {
+    font-size: 1rem;
+    line-height: 1.9;
+    color: #ded8cf;
+    font-weight: 300;
+  }
+
+  .prose-serif p {
+    margin-bottom: 1.75rem;
+  }
+
+  .prose-serif h2 {
+    font-size: 1.75rem;
+    margin: 3rem 0 1rem;
+    color: var(--color-ink);
+  }
+
+  .prose-serif h3 {
+    font-size: 1.375rem;
+    margin: 2.25rem 0 0.75rem;
+    color: var(--color-ink);
+  }
+
+  .prose-serif ul,
+  .prose-serif ol {
+    margin: 0 0 1.75rem 1.1rem;
+    list-style: disc;
+  }
+
+  .prose-serif ol {
+    list-style: decimal;
+  }
+
+  .prose-serif li {
+    margin-bottom: 0.55rem;
+  }
+
+  .prose-serif a {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-color: var(--color-accent);
+    text-underline-offset: 4px;
+  }
+
+  .prose-serif blockquote {
+    border-left: 1px solid var(--color-accent);
+    padding-left: 1.5rem;
+    font-style: italic;
+    color: #cfc8be;
+    margin: 0 0 1.75rem;
+  }
+
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    padding: 0.8rem 0.95rem;
+    font-size: 0.9rem;
+    font-weight: 300;
+    color: var(--color-ink);
+    transition: border-color 160ms ease, background 160ms ease;
+  }
+
+  .field::placeholder {
+    color: #6f6862;
+  }
+
+  .field:focus {
+    border-color: var(--color-brass);
+    background: var(--color-surface-2);
+    outline: none;
+  }
+
+  .label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 0.45rem;
+  }
+
+  /* Benchmark CTA: solid white block, black type; brass on hover */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 400;
+    border: 1px solid var(--color-ink);
+    background: var(--color-ink);
+    color: #0f0e0d;
+    transition: background 220ms ease, color 220ms ease, border-color 220ms ease;
+    cursor: pointer;
+  }
+
+  .btn:hover {
+    background: var(--color-brass);
+    border-color: var(--color-brass);
+    color: #0f0e0d;
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: var(--color-line);
+  }
+
+  .btn-ghost:hover {
+    background: transparent;
+    border-color: var(--color-brass);
+    color: var(--color-brass);
+  }
+
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--color-line);
+  }
+
+  /* The benchmark lays images flush with tight gutters and lifts them slightly on hover */
+  .tile {
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+
+  .tile img {
+    transition: transform 900ms cubic-bezier(0.2, 0.6, 0.2, 1), opacity 400ms ease;
+  }
+
+  .tile:hover img {
+    transform: scale(1.04);
+  }
+}
+
+/* Seamless marquee: the track is duplicated, so -50% lands exactly on the copy */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee var(--marquee-duration, 45s) linear infinite;
+  will-change: transform;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade-up {
+  animation: fadeUp 700ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
