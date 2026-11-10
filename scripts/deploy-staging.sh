@@ -24,7 +24,8 @@ echo "==> building"
 ssh "$HOST" "cd ${REMOTE_DIR} && npm run build"
 
 echo "==> restarting ${SERVICE}"
-ssh "$HOST" "systemctl restart ${SERVICE}"
+# The service is system-wide, so a non-root deploy user needs sudo (passwordless here).
+ssh "$HOST" "sudo -n systemctl restart ${SERVICE}"
 
 echo "==> waiting for health"
 for i in $(seq 1 30); do
