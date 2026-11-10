@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "prisma generate && tsc --noEmit",
     "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
@@ -35,5 +35,14 @@
     "@types/sanitize-html": "^2.16.0",
     "tailwindcss": "^4.3.5",
     "typescript": "5.9.3"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "esbuild@0.28.2": true
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
   }
 }

@@ -28,7 +28,9 @@ export async function processUpload(projectId: string, file: File): Promise<Proc
   if (!meta.width || !meta.height) throw new Error('Unreadable image')
 
   const fileKey = path.posix.join(projectId, randomBytes(10).toString('hex'))
-  await mkdir(path.join(UPLOAD_DIR, projectId), { recursive: true })
+  // UPLOAD_DIR is a runtime setting (./uploads locally, /data/uploads in prod), so it cannot be
+  // statically scoped for Turbopack's file tracing — opt out instead of tracing the whole repo.
+  await mkdir(path.join(/*turbopackIgnore: true*/ UPLOAD_DIR, projectId), { recursive: true })
 
   const base = sharp(buf, { failOn: 'error' }).rotate()
   for (const size of SIZES) {

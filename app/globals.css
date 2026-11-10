@@ -53,14 +53,28 @@
     outline-offset: 4px;
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
+  /* Standard scrollbar styling (Baseline: scrollbar-width 2024-12, scrollbar-color 2025-12).
+     Thumb #6b6459 gives >=3:1 against both the track and the page background (WCAG 1.4.11). */
+  html {
+    --scrollbar-thumb: #6b6459;
+    --scrollbar-track: #0b0a09;
+
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
   }
-  ::-webkit-scrollbar-track {
-    background: #0b0a09;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #2b2723;
+
+  /* Legacy WebKit/Blink fallback only — modern Chromium/Safari honour the standard
+     properties above, and having both active would double-apply the styling. */
+  @supports not (scrollbar-color: auto) {
+    html::-webkit-scrollbar {
+      width: 10px;
+    }
+    html::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+    }
+    html::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+    }
   }
 }
 
