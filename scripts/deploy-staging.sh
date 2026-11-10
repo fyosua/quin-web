@@ -39,6 +39,8 @@ done
 ssh "$HOST" "curl -fsS http://127.0.0.1:3020/api/health" && echo
 
 echo "==> revalidating public pages"
-ssh "$HOST" "cd ${REMOTE_DIR} && TOK=\$(grep REVALIDATE_TOKEN .env.production | cut -d= -f2) && curl -fsS -X POST http://127.0.0.1:3020/api/revalidate -H \"x-revalidate-token: \$TOK\"" && echo
+# .env.production quotes the value (REVALIDATE_TOKEN="..."), so strip quotes or the header 401s.
+ssh "$HOST" "cd ${REMOTE_DIR} && TOK=\$(grep '^REVALIDATE_TOKEN=' .env.production | cut -d= -f2- | tr -d '\"') && curl -fsS -X POST http://127.0.0.1:3020/api/revalidate -H \"x-revalidate-token: \$TOK\"" && echo \
+  || { echo "!! revalidate failed — static pages may still serve stale content"; exit 1; }
 
 echo "==> done: ${SITE}"
